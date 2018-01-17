@@ -3,6 +3,7 @@
 # Created by shimeng on 17-6-5
 import os
 import re
+import sys
 import json
 import urllib
 import urlparse
@@ -97,7 +98,7 @@ class ZhiHu(object):
 
         file_name = unicode('%s--%s的回答[%d].md' % (question_title, author_name, answer_id), 'utf-8')
 
-        folder_name = unicode('%s' % (question_title), 'utf-8')
+        folder_name = unicode('%s' % ('Questions/' + question_title), 'utf-8')
 
         if not os.path.exists(os.path.join(os.getcwd(), folder_name.encode('utf-8'))):
             os.mkdir(folder_name)
@@ -135,16 +136,20 @@ class ZhiHu(object):
             text = text.replace(i, i + "\n\n")
 
             cwd = os.getcwd()
-            folder_name = '%s/image' % (cwd)
+            folder_name = '%s/images/%s' % (cwd,question_title)
 
             if not os.path.exists(folder_name):
                 os.mkdir(folder_name)
             img_url = re.findall('\((.*)\)', i)[0]
-            save_name = img_url.split('/')[-1]
+            save_name =  author_name + '_' + img_url.split('/')[-1]
             pic_file_name = '%s/%s' % (folder_name, save_name)
-
             try:
-                urllib.urlretrieve(img_url, pic_file_name)
+                
+                if not os.path.exists(pic_file_name):
+                    print '正在下载图片：' + save_name
+                    urllib.urlretrieve(img_url, pic_file_name)
+                else:
+                    pass#print '图片已存在！'
             except Exception, e:
                 print e
             else:
@@ -161,5 +166,16 @@ if __name__ == '__main__':
     # zhihu.get_single_answer_content(url)
 
     # 29470294
-    question_id = '24400664'
-    zhihu.get_all_answer_content(question_id)
+    # 24400664 长得好看是怎样一种体验？
+    # '20215578' 国内有哪些工作环境很赞的互联网公司？
+    inputCommand = sys.argv[1]#从命令行输入的id sys.argv[0]是自身脚本名zhihu.py
+
+    #find函数返回的是查找到的子串的lowest index，所以这里刚好是0 ，要用not(⊙﹏⊙)
+    if not inputCommand.find('https'):
+        answerUrl = inputCommand
+        print '爬取单个回答：' + answerUrl
+        zhihu.get_single_answer_content(answerUrl)
+    else:
+        questionId = inputCommand
+        print '爬取某个问题的所有回答：'+ questionId
+        zhihu.get_all_answer_content(questionId)
